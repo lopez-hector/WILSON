@@ -36,7 +36,7 @@ class Trainer:
         else:
             self.old_classes = 0
 
-        self.model = make_model(opts, classes=classes)
+        self.model = make_model(opts, classes=classes) 'This step imports model with pretrained weights'
 
         if opts.step == 0:  # if step 0, we don't need to instance the model_old
             self.model_old = None
