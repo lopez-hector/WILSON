@@ -27,11 +27,17 @@ lr=0.001
 dataset_pars="--dataset ${dataset} --task ${task} --batch_size 24 $ov --val_interval 2"
 
 ## Experiment 1
-exp --name FT_bce --step 0 --bce --lr ${lr_init} ${dataset_pars}  --epochs 30
-#"saves to ckpt_path = f"checkpoints/step/{task_name}/{opts.name}_{opts.step}.pth""
+#exp --name FT_bce --step 0 --bce --lr ${lr_init} ${dataset_pars}  --epochs 30
+##"saves to ckpt_path = f"checkpoints/step/{task_name}/{opts.name}_{opts.step}.pth""
+#
+#### Experiment two
+#pretr_FT=${path}FT_bce_0.pth
+#
+#exp --name OURS --step 1 --weakly ${dataset_pars} --alpha 0.5 --lr ${lr} --step_ckpt $pretr_FT \
+# --loss_de 1 --lr_policy warmup --affinity --epochs ${epochs}
 
-### Experiment two
-pretr_FT=${path}FT_bce_0.pth
 
-exp --name OURS --step 1 --weakly ${dataset_pars} --alpha 0.5 --lr ${lr} --step_ckpt $pretr_FT \
- --loss_de 1 --lr_policy warmup --affinity --epochs ${epochs}
+## Continue run
+
+exp --name OURS --step 1 --weakly ${dataset_pars} --alpha 0.5 --lr ${lr} \
+ --loss_de 1 --lr_policy warmup --affinity --epochs ${epochs} --continue_ckpt

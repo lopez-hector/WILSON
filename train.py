@@ -41,7 +41,7 @@ class Trainer:
         If pretrained, make sure to include the first amount of classes and the number of classes
         in the new dataset.
         """
-        self.model = make_model(opts, classes=classes) 'This step imports model with pretrained weights'
+        self.model = make_model(opts, classes=classes) #'This step imports model with pretrained weights'
 
         if opts.step == 0:  # if step 0, we don't need to instance the model_old
             self.model_old = None

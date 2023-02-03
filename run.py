@@ -32,7 +32,6 @@ def save_ckpt(path, trainer, epoch, best_score):
 
 
 def main(opts):
-
     # setup
     distributed.init_process_group(backend='nccl', init_method='env://')
     device_id, device = opts.local_rank, torch.device(opts.local_rank)
@@ -67,16 +66,20 @@ def main(opts):
     # reset the seed, this revert changes in random seed
     random.seed(opts.random_seed)
 
+    # Dataloaders
     train_loader = data.DataLoader(train_dst, batch_size=opts.batch_size,
                                    sampler=DistributedSampler(train_dst, num_replicas=world_size, rank=rank),
                                    num_workers=opts.num_workers, drop_last=True)
     val_loader = data.DataLoader(val_dst, batch_size=opts.batch_size if opts.crop_val else 1, shuffle=False,
                                  sampler=DistributedSampler(val_dst, num_replicas=world_size, rank=rank),
                                  num_workers=opts.num_workers)
+
+
     logger.info(f"Dataset: {opts.dataset}, Train set: {len(train_dst)}, Val set: {len(val_dst)},"
                 f" Test set: {len(test_dst)}, n_classes {n_classes}")
     logger.info(f"Total batch size is {opts.batch_size * world_size}")
     opts.max_iters = opts.epochs * len(train_loader)
+
     if opts.lr_policy == "warmup":
         opts.start_decay = opts.pseudo_ep * len(train_loader)
 
@@ -123,7 +126,6 @@ def main(opts):
         best_score = 0.
     ################################
 
-
     # xxx Train procedure
     # print opts before starting training to log all parameters
     logger.add_config(opts)
@@ -134,11 +136,13 @@ def main(opts):
 
     # check if random is equal here.
     logger.print(torch.randint(0, 100, (1, 1)))
+
+    ############################################
     # train/val here
     while cur_epoch < opts.epochs and TRAIN:
         # =====  Train  =====
         epoch_loss = trainer.train(cur_epoch=cur_epoch, train_loader=train_loader)
-        print('-'*100)
+        print('-' * 100)
         print('\n')
         logger.info(f"End of Epoch {cur_epoch}/{opts.epochs}, Average Loss={epoch_loss[0] + epoch_loss[1]},"
                     f" Class Loss={epoch_loss[0]}, Reg Loss={epoch_loss[1]}")
