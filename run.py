@@ -32,6 +32,8 @@ def save_ckpt(path, trainer, epoch, best_score):
 
 
 def main(opts):
+
+    # setup
     distributed.init_process_group(backend='nccl', init_method='env://')
     device_id, device = opts.local_rank, torch.device(opts.local_rank)
     rank, world_size = distributed.get_rank(), distributed.get_world_size()
@@ -81,14 +83,23 @@ def main(opts):
     # xxx Set up Trainer
     # instance trainer (model must have already the previous step weights)
     trainer = Trainer(logger, device=device, opts=opts)
-
-    # xxx Load old model from old weights if step > 0!
+    '''
+        Load Previous models
+        1. if step > 0, you're improving on previous model. 
+            a. passed a step_ckpt which will be fine-tuned
+            b. didn't not pass a step_ckpt so we will increment on same name
+        2. 
+    '''
+    ########################
+    # Load old model from old weights if step > 0!
     if opts.step > 0:
         # get model path
         if opts.step_ckpt is not None:
-            path = opts.step_ckpt
+            path = opts.step_ckpt  # get specifically defined model through name definition
         else:
+            # load same named model with 1 previous step
             path = f"checkpoints/step/{task_name}/{opts.name}_{opts.step - 1}.pth"
+
         trainer.load_step_ckpt(path)
 
     # if opts.step > 0 and opts.weakly:
@@ -98,15 +109,20 @@ def main(opts):
     #         pl_path = f"checkpoints/step/{task_name}/{opts.name}_{opts.step}w.pth"
     #     trainer.load_pseudolabeler(pl_path)
 
-    # Load training checkpoint if any
+    # 2. Specifically load a previous ckpt
+    # use if you're training stalled before and want to continue from previous epoch
     if opts.continue_ckpt:
         opts.ckpt = ckpt_path
+
     if opts.ckpt is not None:
+        # resume from previous epoch and best score
         cur_epoch, best_score = trainer.load_ckpt(opts.ckpt)
     else:
         logger.info("[!] Start from epoch 0")
         cur_epoch = 0
         best_score = 0.
+    ################################
+
 
     # xxx Train procedure
     # print opts before starting training to log all parameters
@@ -122,7 +138,8 @@ def main(opts):
     while cur_epoch < opts.epochs and TRAIN:
         # =====  Train  =====
         epoch_loss = trainer.train(cur_epoch=cur_epoch, train_loader=train_loader)
-
+        print('-'*100)
+        print('\n')
         logger.info(f"End of Epoch {cur_epoch}/{opts.epochs}, Average Loss={epoch_loss[0] + epoch_loss[1]},"
                     f" Class Loss={epoch_loss[0]}, Reg Loss={epoch_loss[1]}")
 
@@ -225,6 +242,9 @@ if __name__ == '__main__':
 
     opts = parser.parse_args()
     opts = argparser.modify_command_options(opts)
+
+    'Steps are iterative training steps. Has nothing to do with epochs or batches. ' \
+    'Only how many times youve run the script'
 
     os.makedirs("checkpoints/step", exist_ok=True)
     main(opts)

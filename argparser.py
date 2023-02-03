@@ -92,7 +92,7 @@ def get_argparser():
     parser.add_argument("--name", type=str, default='Experiment',
                         help="name of the experiment - to append to log directory (default: Experiment)")
     parser.add_argument("--sample_num", type=int, default=8,
-                        help='number of samples for visualization (default: 0)')
+                        help='number of samples for visualization (default: 8)')
     parser.add_argument("--debug", action='store_true', default=False,
                         help="verbose option")
     parser.add_argument("--visualize", action='store_false', default=True,

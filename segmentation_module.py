@@ -10,6 +10,7 @@ from functools import partial, reduce
 import models
 from modules import DeeplabV3, custom_bn
 import torch.distributed as distributed
+import json
 
 
 def get_norm(opts):
@@ -30,11 +31,23 @@ def get_norm(opts):
 def get_body(opts, norm):
     body = models.__dict__[f'net_{opts.backbone}'](norm_act=norm, output_stride=opts.output_stride)
     if not opts.no_pretrained:
+        print('-'*100)
+        print("Loading pretrained")
+        print(f'Backbones: {opts.backbone}')
+
         if opts.backbone == "wider_resnet38_a2":
             pretrained_path = f'pretrained/wide_resnet38_ipabn_lr_256.pth.tar'
         else:
+            print('-'*100)
+            print('getting weights')
+            print('-'*100)
             pretrained_path = f'pretrained/{opts.backbone}_iabn_sync.pth.tar'
+
+        print(f'pretrained path: {pretrained_path}')
         pre_dict = torch.load(pretrained_path, map_location='cpu')
+
+        with open('default.json', 'w') as f:
+            json.dump({'default': body.state_dict().keys(), 'pretrained': pre_dict.keys()}, f, indent=4)
 
         new_state = {}
         for k, v in pre_dict['state_dict'].items():
@@ -47,7 +60,7 @@ def get_body(opts, norm):
             del new_state['classifier.fc.weight']
             del new_state['classifier.fc.bias']
 
-        body.load_state_dict(new_state)
+        body.load_state_dict(new_state, strict=False)
         del pre_dict  # free memory
         del new_state
     return body
@@ -118,10 +131,14 @@ class IncrementalSegmentationModule(nn.Module):
     def forward(self, x, as_feature_extractor=False, interpolate=True, scales=None, do_flip=False):
         out_size = x.shape[-2:]
 
-        x_b, x_b3 = self.body(x, ret_int=True)
-        if not as_feature_extractor:
-            x_pl = self.head(x_b)
+        x_b, x_b3 = self.body(x, ret_int=True) # calling the resnet class forward method
+        'x_b: last layer out, x_b3: 3rd (2nd to last) layer output'
 
+        if not as_feature_extractor:
+            x_pl = self.head(x_b) # call segmentation network with resnet outputs
+            # return segmentation mask
+
+            '''call classifier  that takes HxWxY as input'''
             sem_logits = self.cls(x_pl)
 
             if interpolate:

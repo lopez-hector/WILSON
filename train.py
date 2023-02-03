@@ -26,21 +26,26 @@ class Trainer:
         self.device = device
         self.opts = opts
         self.scaler = amp.GradScaler()
-
+        'Grab list of classes, where each entry corresponds to the the number of classes ' \
+        'in that training step'
         self.classes = classes = tasks.get_per_task_classes(opts.dataset, opts.task, opts.step)
 
         if classes is not None:
-            new_classes = classes[-1]
+            new_classes = classes[-1] #classes in this training step
             self.tot_classes = reduce(lambda a, b: a + b, classes)
             self.old_classes = self.tot_classes - new_classes
         else:
             self.old_classes = 0
-
+        """
+        The classes passed here is a list of classes for each step
+        If pretrained, make sure to include the first amount of classes and the number of classes
+        in the new dataset.
+        """
         self.model = make_model(opts, classes=classes) 'This step imports model with pretrained weights'
 
         if opts.step == 0:  # if step 0, we don't need to instance the model_old
             self.model_old = None
-        else:  # instance model_old
+        else:  # instance model_old, in the case of fine tuning to new classes
             self.model_old = make_model(opts, classes=tasks.get_per_task_classes(opts.dataset, opts.task, opts.step - 1))
             self.model_old.to(self.device)
             # freeze old model and set eval mode
