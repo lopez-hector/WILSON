@@ -476,8 +476,13 @@ class Trainer:
                             # colormap used by imshow
                             colors = [im.cmap(im.norm(value)) for value in values]
                             # create a patch (proxy artist) for every color
-                            patches = [mpatches.Patch(color=colors[i], label=f"{self.id2class[val]}") for val in
-                                       values]
+                            patches = []
+                            for val in values:
+                                if val in self.id2class:
+                                    label_ = self.id2class[val]
+                                else:
+                                    label_ = 'unknown'
+                                patches.append(mpatches.Patch(color=colors[i], label=label_))
                             return patches
 
                         #####
