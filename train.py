@@ -457,6 +457,7 @@ class Trainer:
             # collect statistics from multiple processes
             metrics.synch(device)
             score = metrics.get_results()
+            print(self.classes)
 
         return score
 
