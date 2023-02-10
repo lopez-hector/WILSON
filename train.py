@@ -425,8 +425,9 @@ class Trainer:
                         masks = classify(images) # get segmentation mask predictions
 
                     _, prediction = masks.max(dim=1)
-
-                    labels[labels < self.old_classes] = 0 # remove old classes from image
+                    unfiltered_labels = labels  # used for image display later
+                    labels[labels < self.old_classes] = 0  # remove old classes from image to only rank weak
+                    # supervision against new labels
                     labels = labels.cpu().numpy()
                     prediction = prediction.cpu().numpy()
 
@@ -447,7 +448,7 @@ class Trainer:
                         ax[1].imshow(prediction)
                         ax[1].set_title(f'Weakly Supervised Segmentation')
                         ax[2].imshow(labels[0])
-                        ax[2].set_title(f'Ground Truth {np.unique(labels).tolist()}')
+                        ax[2].set_title(f'Ground Truth {np.unique(unfiltered_labels).tolist()}')
 
                 if i == max_plot_img:
                   break
