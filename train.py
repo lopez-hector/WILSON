@@ -477,7 +477,7 @@ class Trainer:
                             colors = [im.cmap(im.norm(value)) for value in values]
                             # create a patch (proxy artist) for every color
                             patches = []
-                            for val in values:
+                            for i, val in enumerate(values):
                                 if val in self.id2class:
                                     label_ = self.id2class[val]
                                 else:
