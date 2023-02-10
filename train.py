@@ -468,9 +468,9 @@ class Trainer:
                         print(l1h, type(l1h))
                         ax[0].imshow(image)
                         ax[0].set_title(f'Image Label {[self.id2class[lab+1] for lab in l1h]}')
-                        ax[1].imshow(prediction)
+                        ax[1].imshow(prediction, cmap='tab20c')
                         ax[1].set_title(f'Weakly Supervised Segmentation')
-                        ax[2].imshow(labels[0])
+                        ax[2].imshow(labels[0], cmap='tab20c')
                         ground_truth_values = [self.id2class[lab] for lab in np.unique(unfiltered_labels).tolist() if lab not in [0, 255]]
                         ax[2].set_title(f'Ground Truth {ground_truth_values}')
 
