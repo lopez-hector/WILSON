@@ -114,7 +114,29 @@ class Trainer:
             elif self.icarl_only_dist:
                 self.licarl = IcarlLoss(reduction='mean', bkg=opts.icarl_bkg)
         self.icarl_dist_flag = self.icarl_only_dist or self.icarl_combined
-
+        self.id2class = classes = {
+    0: 'background',
+    1: 'aeroplane',
+    2: 'bicycle',
+    3: 'bird',
+    4: 'boat',
+    5: 'bottle',
+    6: 'bus',
+    7: 'car',
+    8: 'cat',
+    9: 'chair',
+    10: 'cow',
+    11: 'diningtable',
+    12: 'dog',
+    13: 'horse',
+    14: 'motorbike',
+    15: 'person',
+    16: 'pottedplant',
+    17: 'sheep',
+    18: 'sofa',
+    19: 'train',
+    20: 'tvmonitor'
+}
     def get_optimizer(self, opts):
         params = []
         if not opts.freeze:
@@ -425,7 +447,7 @@ class Trainer:
                         masks = classify(images) # get segmentation mask predictions
 
                     _, prediction = masks.max(dim=1)
-                    unfiltered_labels = labels  # used for image display later
+                    unfiltered_labels = labels.cpu().numpy()  # used for image display later
                     labels[labels < self.old_classes] = 0  # remove old classes from image to only rank weak
                     # supervision against new labels
                     labels = labels.cpu().numpy()
@@ -444,11 +466,13 @@ class Trainer:
                         # blend = cv2.addWeighted(np.array(image), 0.4, prediction, 0.8, 0)
                         l1h = l1h.cpu().numpy()[0]
                         ax[0].imshow(image)
-                        ax[0].set_title(f'Image Label {np.where(l1h)}')
+                        ax[0].set_title(f'Image Label {[self.id2class[lab+1] for lab in np.where(l1h)]}')
                         ax[1].imshow(prediction)
                         ax[1].set_title(f'Weakly Supervised Segmentation')
                         ax[2].imshow(labels[0])
-                        ax[2].set_title(f'Ground Truth {np.unique(unfiltered_labels).tolist()}')
+                        ground_truth_values = np.unique([self.id2class[lab] for lab in unfiltered_labels \
+                                                         if lab not in [0, 255]]).tolist()
+                        ax[2].set_title(f'Ground Truth {ground_truth_values}')
 
 
                 if i == max_plot_img:
