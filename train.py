@@ -31,7 +31,7 @@ class Trainer:
         self.classes = classes = tasks.get_per_task_classes(opts.dataset, opts.task, opts.step)
 
         if classes is not None:
-            new_classes = classes[-1] #classes in this training step
+            new_classes = classes[-1]  # classes in this training step
             self.tot_classes = reduce(lambda a, b: a + b, classes)
             self.old_classes = self.tot_classes - new_classes
         else:
@@ -41,12 +41,13 @@ class Trainer:
         If pretrained, make sure to include the first amount of classes and the number of classes
         in the new dataset.
         """
-        self.model = make_model(opts, classes=classes) #'This step imports model with pretrained weights'
+        self.model = make_model(opts, classes=classes)  # 'This step imports model with pretrained weights'
 
         if opts.step == 0:  # if step 0, we don't need to instance the model_old
             self.model_old = None
         else:  # instance model_old, in the case of fine tuning to new classes
-            self.model_old = make_model(opts, classes=tasks.get_per_task_classes(opts.dataset, opts.task, opts.step - 1))
+            self.model_old = make_model(opts,
+                                        classes=tasks.get_per_task_classes(opts.dataset, opts.task, opts.step - 1))
             self.model_old.to(self.device)
             # freeze old model and set eval mode
             for par in self.model_old.parameters():
@@ -115,28 +116,29 @@ class Trainer:
                 self.licarl = IcarlLoss(reduction='mean', bkg=opts.icarl_bkg)
         self.icarl_dist_flag = self.icarl_only_dist or self.icarl_combined
         self.id2class = classes = {
-    0: 'background',
-    1: 'aeroplane',
-    2: 'bicycle',
-    3: 'bird',
-    4: 'boat',
-    5: 'bottle',
-    6: 'bus',
-    7: 'car',
-    8: 'cat',
-    9: 'chair',
-    10: 'cow',
-    11: 'diningtable',
-    12: 'dog',
-    13: 'horse',
-    14: 'motorbike',
-    15: 'person',
-    16: 'pottedplant',
-    17: 'sheep',
-    18: 'sofa',
-    19: 'train',
-    20: 'tvmonitor'
-}
+            0: 'background',
+            1: 'aeroplane',
+            2: 'bicycle',
+            3: 'bird',
+            4: 'boat',
+            5: 'bottle',
+            6: 'bus',
+            7: 'car',
+            8: 'cat',
+            9: 'chair',
+            10: 'cow',
+            11: 'diningtable',
+            12: 'dog',
+            13: 'horse',
+            14: 'motorbike',
+            15: 'person',
+            16: 'pottedplant',
+            17: 'sheep',
+            18: 'sofa',
+            19: 'train',
+            20: 'tvmonitor'
+        }
+
     def get_optimizer(self, opts):
         params = []
         if not opts.freeze:
@@ -144,9 +146,9 @@ class Trainer:
                            'weight_decay': opts.weight_decay})
 
         params.append({"params": filter(lambda p: p.requires_grad, self.model.head.parameters()),
-                       'weight_decay': opts.weight_decay, 'lr': opts.lr*opts.lr_head})
+                       'weight_decay': opts.weight_decay, 'lr': opts.lr * opts.lr_head})
         params.append({"params": filter(lambda p: p.requires_grad, self.model.cls.parameters()),
-                       'weight_decay': opts.weight_decay, 'lr': opts.lr*opts.lr_head})
+                       'weight_decay': opts.weight_decay, 'lr': opts.lr * opts.lr_head})
         if self.weakly:
             params.append({"params": filter(lambda p: p.requires_grad, self.pseudolabeler.parameters()),
                            'weight_decay': opts.weight_decay, 'lr': opts.lr_pseudo})
@@ -160,7 +162,8 @@ class Trainer:
         self.model = DistributedDataParallel(self.model.to(self.device), device_ids=[opts.device_id],
                                              output_device=opts.device_id, find_unused_parameters=False)
         if self.weakly:
-            self.pseudolabeler = DistributedDataParallel(self.pseudolabeler.to(self.device), device_ids=[opts.device_id],
+            self.pseudolabeler = DistributedDataParallel(self.pseudolabeler.to(self.device),
+                                                         device_ids=[opts.device_id],
                                                          output_device=opts.device_id, find_unused_parameters=False)
 
     def train(self, cur_epoch, train_loader, print_int=10):
@@ -203,7 +206,8 @@ class Trainer:
             labels = labels.to(device, dtype=torch.long)
 
             with amp.autocast():
-                if (self.lde_flag or self.lkd_flag or self.icarl_dist_flag or self.weakly) and self.model_old is not None:
+                if (
+                        self.lde_flag or self.lkd_flag or self.icarl_dist_flag or self.weakly) and self.model_old is not None:
                     with torch.no_grad():
                         outputs_old, features_old = self.model_old(images, interpolate=False)
 
@@ -286,14 +290,14 @@ class Trainer:
 
                         pseudo_gt_seg_lx = binarize(int_masks_orig)
                         pseudo_gt_seg_lx = (self.opts.alpha * pseudo_gt_seg_lx) + \
-                                           ((1-self.opts.alpha) * int_masks_orig)
+                                           ((1 - self.opts.alpha) * int_masks_orig)
 
                         # ignore_mask = (pseudo_gt_seg.sum(1) > 0)
                         px_cls_per_image = pseudo_gt_seg_lx.view(bs, self.tot_classes, -1).sum(dim=-1)
                         batch_weight = torch.eq((px_cls_per_image[:, self.old_classes:] > 0),
                                                 l1h[:, self.old_classes - 1:].bool())
                         batch_weight = (
-                                    batch_weight.sum(dim=1) == (self.tot_classes - self.old_classes)).float()
+                                batch_weight.sum(dim=1) == (self.tot_classes - self.old_classes)).float()
 
                         target_old = torch.sigmoid(outputs_old.detach())
 
@@ -301,7 +305,7 @@ class Trainer:
                         if self.opts.icarl_bkg == -1:
                             target[:, 0] = torch.min(target[:, 0], pseudo_gt_seg_lx[:, 0])
                         else:
-                            target[:, 0] = (1-self.opts.icarl_bkg) * target[:, 0] + \
+                            target[:, 0] = (1 - self.opts.icarl_bkg) * target[:, 0] + \
                                            self.opts.icarl_bkg * pseudo_gt_seg_lx[:, 0]
 
                         l_seg = F.binary_cross_entropy_with_logits(outputs, target, reduction='none').sum(dim=1)
@@ -398,7 +402,7 @@ class Trainer:
             score = metrics.get_results()
 
         return score
-      
+
     def validate_CAM(self, loader, metrics, plot=False, val_set=None):
         """Do validation and return specified samples"""
         metrics.reset()
@@ -415,7 +419,6 @@ class Trainer:
             masks = masks.softmax(dim=1)
             return masks
 
-
         # setup plot
         if plot:
             import numpy as np
@@ -424,7 +427,7 @@ class Trainer:
             from torchvision.transforms import ToPILImage
 
             subplots_samples = 5
-            fig, axs = plt.subplots(subplots_samples, 3, figsize=(20, subplots_samples*5))
+            fig, axs = plt.subplots(subplots_samples, 3, figsize=(20, subplots_samples * 5))
             axs = axs.tolist()
             rand_gen = np.random.default_rng()
             max_plot_img = 10
@@ -437,14 +440,14 @@ class Trainer:
             for x in tqdm.tqdm(loader):
 
                 # x (image, mask, ImglvlLabel)
-                i = i+1
+                i = i + 1
                 if i in indices:
                     images = x[0].to(device, dtype=torch.float32)
-                    labels = x[1].to(device, dtype=torch.long) # segmentation masks ground truths
-                    l1h = x[2].to(device, dtype=torch.bool) # level image labels
+                    labels = x[1].to(device, dtype=torch.long)  # segmentation masks ground truths
+                    l1h = x[2].to(device, dtype=torch.bool)  # level image labels
 
                     with amp.autocast():
-                        masks = classify(images) # get segmentation mask predictions
+                        masks = classify(images)  # get segmentation mask predictions
 
                     _, prediction = masks.max(dim=1)
                     unfiltered_labels = labels.cpu().numpy()  # used for image display later
@@ -453,7 +456,7 @@ class Trainer:
                     labels = labels.cpu().numpy()
                     prediction = prediction.cpu().numpy()
 
-                    metrics.update(labels, prediction) # segmentation mask prediction
+                    metrics.update(labels, prediction)  # segmentation mask prediction
 
                     if plot:
                         val_data = val_set.no_transform(i)
@@ -465,27 +468,46 @@ class Trainer:
                         # prediction = np.repeat(np.array(prediction, np.float64)[:, :, np.newaxis], 3, axis=2)
                         # blend = cv2.addWeighted(np.array(image), 0.4, prediction, 0.8, 0)
                         l1h = np.nonzero(l1h.cpu().numpy()[0])[0].tolist()
-                        print(l1h, type(l1h))
-                        ax[0].imshow(image)
-                        ax[0].set_title(f'Image Label {[self.id2class[lab+1] for lab in l1h]}')
 
-                        ax[1].imshow(prediction, cmap='tab20b')
-                        unique_predictions = [self.id2class[lab] for lab in np.unique(prediction.flatten()).tolist() \
+                        def get_patches(im, values):
+                            import matplotlib.patches as mpatches
+                            # get the colors of the values, according to the
+                            # colormap used by imshow
+                            colors = [im.cmap(im.norm(value)) for value in values]
+                            # create a patch (proxy artist) for every color
+                            patches = [mpatches.Patch(color=colors[i], label="Level {l}".format(l=values[i])) for i in
+                                       range(len(values))]
+                            return patches
+
+                        #####
+                        ax[0].imshow(image)
+                        ax[0].set_title(f'Image Label {[self.id2class[lab + 1] for lab in l1h]}')
+
+                        #########
+                        im = ax[1].imshow(prediction, cmap='tab20b')
+                        values = np.unique(prediction.flatten()).tolist()
+                        unique_predictions = [self.id2class[lab] for lab in values
                                               if lab not in [0, 255]]
                         ax[1].set_title(f'Weakly Supervised Segmentation {unique_predictions}')
+                        patches = get_patches(im, values)
+                        # put those patched as legend-handles into the legend
+                        ax[1].legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
-                        print('-'*50)
-                        print(unfiltered_labels.shape, unfiltered_labels[0].shape)
-                        ax[2].imshow(unfiltered_labels[0], cmap='tab20b')
-                        ground_truth_values = [self.id2class[lab] for lab in np.unique(unfiltered_labels).tolist() if lab not in [0, 255]]
+                        ################
+                        im = ax[2].imshow(unfiltered_labels[0], cmap='tab20b')
+                        values = np.unique(unfiltered_labels).tolist()
+                        ground_truth_values = [self.id2class[lab] for lab in values if
+                                               lab not in [0, 255]]
                         ax[2].set_title(f'Ground Truth {ground_truth_values}')
+                        ax[2].legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+
 
 
                 if i == max_plot_img:
-                  break
+                    break
             # 
             if plot:
-              fig.savefig('Subplots.png')
+                fig.savefig('Subplots.png')
             # collect statistics from multiple processes
             metrics.synch(device)
             score = metrics.get_results()
