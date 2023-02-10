@@ -402,7 +402,7 @@ class Trainer:
             from torchvision.transforms import ToPILImage
 
             subplots_samples = 2
-            fig, axs = plt.subplots(subplots_samples, 3, figsize=(subplots_samples*5, 20))
+            fig, axs = plt.subplots(subplots_samples, 3, figsize=(20, subplots_samples*5))
             axs = axs.tolist()
             rand_gen = np.random.default_rng()
             max_plot_img = 10
