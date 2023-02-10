@@ -352,6 +352,9 @@ class Trainer:
 
         model.eval()
 
+        # load dataset gives you
+        # img, target, img_lvl_lbls
+
         with torch.no_grad():
             for i, x in enumerate(loader):
                 images = x[0].to(device, dtype=torch.float32)
