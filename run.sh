@@ -40,4 +40,5 @@ dataset_pars="--dataset ${dataset} --task ${task} --batch_size 24 $ov --val_inte
 ## Continue run
 
 exp --name OURS --step 1 --weakly ${dataset_pars} --alpha 0.5 --lr ${lr} \
- --loss_de 1 --lr_policy warmup --affinity --epochs ${epochs} --continue_ckpt
+ --loss_de 1 --lr_policy warmup --affinity --epochs ${epochs} --continue_ckpt \
+ --test

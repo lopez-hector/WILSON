@@ -95,7 +95,7 @@ def main(opts):
     '''
     ########################
     # Load old model from old weights if step > 0!
-    if opts.step > 0:
+    if opts.step > 0 and not opts.continue_ckpt:
         # get model path
         if opts.step_ckpt is not None:
             path = opts.step_ckpt  # get specifically defined model through name definition
@@ -124,6 +124,7 @@ def main(opts):
         logger.info("[!] Start from epoch 0")
         cur_epoch = 0
         best_score = 0.
+
     ################################
 
     # xxx Train procedure
@@ -204,41 +205,45 @@ def main(opts):
     torch.distributed.barrier()
 
     if opts.weakly and opts.test:
+        print('--'*50)
+        print('Validation of CAMs')
+        # print(len(val_dst), val_dst[:10])
         val_loader = data.DataLoader(val_dst, batch_size=1, shuffle=False,
                                      sampler=DistributedSampler(val_dst, num_replicas=world_size, rank=rank),
                                      num_workers=opts.num_workers)
-        val_score_cam = trainer.validate_CAM(loader=val_loader, metrics=val_metrics, multi_scale=True)
+        val_score_cam = trainer.validate_CAM(loader=val_loader, metrics=val_metrics, plot=True, val_set=val_dst)
         logger.add_scalar("Val_CAM/MeanAcc", val_score_cam['Agg'][1], cur_epoch)
         logger.add_scalar("Val_CAM/MeanPrec", val_score_cam['Agg'][2], cur_epoch)
         logger.add_scalar("Val_CAM/MeanIoU", val_score_cam['Mean IoU'], cur_epoch)
         logger.info(val_metrics.to_str(val_score_cam))
         logger.print("Done validation CAM")
 
-    # xxx From here starts the test code
-    logger.info("*** Test the model on all seen classes...")
-    # make data loader
-    test_loader = data.DataLoader(test_dst, batch_size=opts.batch_size if opts.crop_val else 1,
-                                  sampler=DistributedSampler(test_dst, num_replicas=world_size, rank=rank),
-                                  num_workers=opts.num_workers)
+    if False:
+      # xxx From here starts the test code
+      logger.info("*** Test the model on all seen classes...")
+      # make data loader
+      test_loader = data.DataLoader(test_dst, batch_size=opts.batch_size if opts.crop_val else 1,
+                                    sampler=DistributedSampler(test_dst, num_replicas=world_size, rank=rank),
+                                    num_workers=opts.num_workers)
 
-    val_score, = trainer.validate(loader=test_loader, metrics=val_metrics)
-    logger.info(f"*** End of Test")
-    logger.info(val_metrics.to_str(val_score))
-    logger.add_table("Test/Class_IoU", val_score['Class IoU'])
-    logger.add_table("Test/Class_Acc", val_score['Class Acc'])
-    logger.add_figure("Test/Confusion_Matrix", val_score['Confusion Matrix'])
-    results["T-IoU"] = val_score['Class IoU']
-    results["T-Acc"] = val_score['Class Acc']
-    # logger.add_results(results)
+      val_score = trainer.validate(loader=test_loader, metrics=val_metrics)
+      logger.info(f"*** End of Test")
+      logger.info(val_metrics.to_str(val_score))
+      logger.add_table("Test/Class_IoU", val_score['Class IoU'])
+      logger.add_table("Test/Class_Acc", val_score['Class Acc'])
+      logger.add_figure("Test/Confusion_Matrix", val_score['Confusion Matrix'])
+      results["T-IoU"] = val_score['Class IoU']
+      results["T-Acc"] = val_score['Class Acc']
+      # logger.add_results(results)
 
-    logger.add_scalar("Test/Overall_Acc", val_score['Overall Acc'], opts.step)
-    logger.add_scalar("Test/MeanIoU", val_score['Mean IoU'], opts.step)
-    logger.add_scalar("Test/MeanAcc", val_score['Mean Acc'], opts.step)
-    logger.commit()
+      logger.add_scalar("Test/Overall_Acc", val_score['Overall Acc'], opts.step)
+      logger.add_scalar("Test/MeanIoU", val_score['Mean IoU'], opts.step)
+      logger.add_scalar("Test/MeanAcc", val_score['Mean Acc'], opts.step)
+      logger.commit()
 
-    logger.log_results(task=task_name, name=opts.name, results=val_score['Class IoU'].values())
-    logger.log_aggregates(task=task_name, name=opts.name, results=val_score['Agg'])
-    logger.close()
+      logger.log_results(task=task_name, name=opts.name, results=val_score['Class IoU'].values())
+      logger.log_aggregates(task=task_name, name=opts.name, results=val_score['Agg'])
+      logger.close()
 
 
 if __name__ == '__main__':
@@ -247,8 +252,8 @@ if __name__ == '__main__':
     opts = parser.parse_args()
     opts = argparser.modify_command_options(opts)
 
-    'Steps are iterative training steps. Has nothing to do with epochs or batches. ' \
-    'Only how many times youve run the script'
+    # 'Steps are iterative training steps. Has nothing to do with epochs or batches. ' \
+    # 'Only how many times youve run the script'
 
     os.makedirs("checkpoints/step", exist_ok=True)
     main(opts)

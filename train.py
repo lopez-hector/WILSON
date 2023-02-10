@@ -373,8 +373,8 @@ class Trainer:
             score = metrics.get_results()
 
         return score
-
-    def validate_CAM(self, loader, metrics):
+      
+    def validate_CAM(self, loader, metrics, plot=False, val_set=None):
         """Do validation and return specified samples"""
         metrics.reset()
         model = self.model
@@ -383,30 +383,68 @@ class Trainer:
         self.pseudolabeler.eval()
         model.eval()
 
+        # define model pipeline for segmentation mask predictions
         def classify(images):
             masks = self.pseudolabeler(model(images, as_feature_extractor=True)['body'])
             masks = F.interpolate(masks, size=images.shape[-2:], mode="bilinear", align_corners=False)
             masks = masks.softmax(dim=1)
             return masks
 
+
+        # setup plot
+        if plot:
+            import numpy as np
+            import cv2
+            import matplotlib.pyplot as plt
+            from torchvision.transforms import ToPILImage
+            
+            fig, axs = plt.subplots(10, 4, figsize=(10, 30))
+            axs = axs.tolist()
+            rand_gen = np.random.default_rng()
+            max_plot_img = 100
+            indices = rand_gen.choice(max_plot_img, 10, replace=False)
+
+        # run predictions
         i = -1
         with torch.no_grad():
+
             for x in tqdm.tqdm(loader):
+                # x (image, mask, ImglvlLabel)
                 i = i+1
                 images = x[0].to(device, dtype=torch.float32)
-                labels = x[1].to(device, dtype=torch.long)
-                l1h = x[2].to(device, dtype=torch.bool)
+                labels = x[1].to(device, dtype=torch.long) # segmentation masks ground truths
+                l1h = x[2].to(device, dtype=torch.bool) # level image labels
 
                 with amp.autocast():
-                    masks = classify(images)
+                    masks = classify(images) # get segmentation mask predictions
 
                 _, prediction = masks.max(dim=1)
 
                 labels[labels < self.old_classes] = 0
                 labels = labels.cpu().numpy()
                 prediction = prediction.cpu().numpy()
-                metrics.update(labels, prediction)
 
+                metrics.update(labels, prediction) # segmentation mask prediction
+
+                if plot and i in indices:
+                    val_data = val_set.no_transform(i)
+                    image = val_data
+                    
+                    ax = axs.pop()
+                    prediction = prediction[0]
+                    prediction[prediction != 0] = 255
+                    prediction = np.repeat(np.array(prediction, np.float64)[:, :, np.newaxis], 3, axis=2)
+                    # blend = cv2.addWeighted(np.array(image), 0.4, prediction, 0.8, 0)
+
+                    ax[0].imshow(image)
+                    ax[1].imshow(prediction)
+                    ax[2].imshow(labels[0])
+
+                if i == 100:
+                  break
+            # 
+            if plot:
+              fig.savefig('Subplots.png')
             # collect statistics from multiple processes
             metrics.synch(device)
             score = metrics.get_results()

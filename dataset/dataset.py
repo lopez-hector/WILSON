@@ -89,7 +89,21 @@ class IncrementalSegmentationDataset(data.Dataset):
 
         else:
             raise ValueError("absolute value of index should not exceed dataset length")
+    
+    def no_transform(self, index):
+        if index < 0:
+            if -index > len(self):
+                raise ValueError("absolute value of index should not exceed dataset length")
+            index = len(self) + index
 
+        if index < len(self):
+            data = self.dataset[index]
+            img, _, _ = data[0], data[1], data[2]
+            
+            return img
+
+        else:
+            raise ValueError("absolute value of index should not exceed dataset length")
     @staticmethod
     def __strip_zero(labels):
         while 0 in labels:
