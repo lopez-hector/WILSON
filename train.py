@@ -424,7 +424,7 @@ class Trainer:
 
                 _, prediction = masks.max(dim=1)
 
-                labels[labels < self.old_classes] = 0
+                labels[labels < self.old_classes] = 0 # remove old classes from image
                 labels = labels.cpu().numpy()
                 prediction = prediction.cpu().numpy()
 
@@ -441,8 +441,12 @@ class Trainer:
                     # blend = cv2.addWeighted(np.array(image), 0.4, prediction, 0.8, 0)
 
                     ax[0].imshow(image)
+                    ax[0].set_title(f'Image Label {l1h}')
                     ax[1].imshow(prediction)
+                    ax[1].set_title(f'Weakly Supervised Segmentation')
                     ax[2].imshow(labels[0])
+                    ax[2].set_title(f'Ground Truth {np.unique(labels).tolist}')
+
 
                 if i == max_plot_img:
                   break
