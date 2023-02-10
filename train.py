@@ -490,7 +490,7 @@ class Trainer:
                         ax[0].set_title(f'Image Label {[self.id2class[lab + 1] for lab in l1h]}')
 
                         #########
-                        im = ax[1].imshow(prediction, cmap='set3')
+                        im = ax[1].imshow(prediction, cmap='Set3')
                         values = np.unique(prediction.flatten()).tolist()
                         unique_predictions = [self.id2class[lab] for lab in values
                                               if lab not in [0, 255]]
@@ -500,7 +500,7 @@ class Trainer:
                         ax[1].legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
                         ################
-                        im = ax[2].imshow(unfiltered_labels[0], cmap='set3')
+                        im = ax[2].imshow(unfiltered_labels[0], cmap='Set3')
                         values = np.unique(unfiltered_labels).tolist()
                         ground_truth_values = [self.id2class[lab] for lab in values if
                                                lab not in [0, 255]]
