@@ -71,6 +71,7 @@ def main(opts):
                                    sampler=DistributedSampler(train_dst, num_replicas=world_size, rank=rank),
                                    num_workers=opts.num_workers, drop_last=True)
     val_loader = data.DataLoader(val_dst, batch_size=opts.batch_size if opts.crop_val else 1, shuffle=False,
+                                 sampler=DistributedSampler(val_dst, num_replicas=world_size, rank=rank),
                                  num_workers=opts.num_workers)
 
 
@@ -207,9 +208,8 @@ def main(opts):
         print('--'*50)
         print('Validation of CAMs')
         # print(len(val_dst), val_dst[:10])
-        val_loader = data.DataLoader(val_dst, batch_size=1, shuffle=False,
-                                     sampler=DistributedSampler(val_dst, num_replicas=world_size, rank=rank),
-                                     num_workers=opts.num_workers)
+        val_loader = data.DataLoader(val_dst, batch_size=1, shuffle=False)
+
         val_score_cam = trainer.validate_CAM(loader=val_loader, metrics=val_metrics, plot=True, val_set=val_dst)
         logger.add_scalar("Val_CAM/MeanAcc", val_score_cam['Agg'][1], cur_epoch)
         logger.add_scalar("Val_CAM/MeanPrec", val_score_cam['Agg'][2], cur_epoch)
