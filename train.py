@@ -441,9 +441,9 @@ class Trainer:
                         # prediction[prediction != 0] = 255
                         prediction = np.repeat(np.array(prediction, np.float64)[:, :, np.newaxis], 3, axis=2)
                         # blend = cv2.addWeighted(np.array(image), 0.4, prediction, 0.8, 0)
-
+                        print(l1h.cpu().numpy())
                         ax[0].imshow(image)
-                        ax[0].set_title(f'Image Label {np.where(l1h.cpu().numpy())}')
+                        # ax[0].set_title(f'Image Label {np.where(l1h.cpu().numpy())}')
                         ax[1].imshow(prediction)
                         ax[1].set_title(f'Weakly Supervised Segmentation')
                         ax[2].imshow(labels[0])
