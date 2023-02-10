@@ -46,8 +46,8 @@ def get_body(opts, norm):
         print(f'pretrained path: {pretrained_path}')
         pre_dict = torch.load(pretrained_path, map_location='cpu')
 
-        with open('default.json', 'w') as f:
-            json.dump({'default': body.state_dict().keys(), 'pretrained': pre_dict.keys()}, f, indent=4)
+        # with open('default.json', 'w') as f:
+        #     json.dump({'default': body.state_dict().keys(), 'pretrained': pre_dict.keys()}, f, indent=4)
 
         new_state = {}
         for k, v in pre_dict['state_dict'].items():
