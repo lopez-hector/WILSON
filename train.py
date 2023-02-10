@@ -423,11 +423,11 @@ class Trainer:
             import matplotlib.pyplot as plt
             from torchvision.transforms import ToPILImage
 
-            subplots_samples = 20
+            subplots_samples = 5
             fig, axs = plt.subplots(subplots_samples, 3, figsize=(20, subplots_samples*5))
             axs = axs.tolist()
             rand_gen = np.random.default_rng()
-            max_plot_img = len(loader)
+            max_plot_img = 10
             indices = rand_gen.choice(max_plot_img, subplots_samples, replace=False)
 
         # run predictions
