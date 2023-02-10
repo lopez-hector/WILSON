@@ -400,12 +400,13 @@ class Trainer:
             import cv2
             import matplotlib.pyplot as plt
             from torchvision.transforms import ToPILImage
-            
-            fig, axs = plt.subplots(10, 4, figsize=(10, 30))
+
+            subplots_samples = 2
+            fig, axs = plt.subplots(subplots_samples, 3, figsize=(subplots_samples*5, 20))
             axs = axs.tolist()
             rand_gen = np.random.default_rng()
-            max_plot_img = 100
-            indices = rand_gen.choice(max_plot_img, 10, replace=False)
+            max_plot_img = 10
+            indices = rand_gen.choice(max_plot_img, 2, replace=False)
 
         # run predictions
         i = -1
@@ -435,7 +436,7 @@ class Trainer:
                     
                     ax = axs.pop()
                     prediction = prediction[0]
-                    prediction[prediction != 0] = 255
+                    # prediction[prediction != 0] = 255
                     prediction = np.repeat(np.array(prediction, np.float64)[:, :, np.newaxis], 3, axis=2)
                     # blend = cv2.addWeighted(np.array(image), 0.4, prediction, 0.8, 0)
 
@@ -443,7 +444,7 @@ class Trainer:
                     ax[1].imshow(prediction)
                     ax[2].imshow(labels[0])
 
-                if i == 100:
+                if i == max_plot_img:
                   break
             # 
             if plot:
