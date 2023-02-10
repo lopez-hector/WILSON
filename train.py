@@ -462,7 +462,7 @@ class Trainer:
                         ax = axs.pop()
                         prediction = prediction[0]
                         # prediction[prediction != 0] = 255
-                        prediction = np.repeat(np.array(prediction, np.float64)[:, :, np.newaxis], 3, axis=2)
+                        # prediction = np.repeat(np.array(prediction, np.float64)[:, :, np.newaxis], 3, axis=2)
                         # blend = cv2.addWeighted(np.array(image), 0.4, prediction, 0.8, 0)
                         l1h = np.nonzero(l1h.cpu().numpy()[0])[0].tolist()
                         print(l1h, type(l1h))
