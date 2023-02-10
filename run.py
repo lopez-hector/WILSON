@@ -12,7 +12,7 @@ from torch import distributed
 from dataset import get_dataset
 from metrics import StreamSegMetrics
 from train import Trainer
-
+# testing
 
 def save_ckpt(path, trainer, epoch, best_score):
     """ save current model
