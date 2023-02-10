@@ -136,7 +136,8 @@ class Trainer:
             17: 'sheep',
             18: 'sofa',
             19: 'train',
-            20: 'tvmonitor'
+            20: 'tvmonitor',
+            255: 'WHITE'
         }
 
     def get_optimizer(self, opts):
@@ -475,8 +476,8 @@ class Trainer:
                             # colormap used by imshow
                             colors = [im.cmap(im.norm(value)) for value in values]
                             # create a patch (proxy artist) for every color
-                            patches = [mpatches.Patch(color=colors[i], label="Level {l}".format(l=values[i])) for i in
-                                       range(len(values))]
+                            patches = [mpatches.Patch(color=colors[i], label=f"{self.id2class[val]}") for val in
+                                       values]
                             return patches
 
                         #####
