@@ -464,7 +464,7 @@ class Trainer:
                         # prediction[prediction != 0] = 255
                         prediction = np.repeat(np.array(prediction, np.float64)[:, :, np.newaxis], 3, axis=2)
                         # blend = cv2.addWeighted(np.array(image), 0.4, prediction, 0.8, 0)
-                        l1h = np.where(l1h.cpu().numpy()[0])
+                        l1h = np.nonzero(l1h.cpu().numpy()[0])
                         print(l1h, type(l1h))
                         ax[0].imshow(image)
                         ax[0].set_title(f'Image Label {[self.id2class[lab+1] for lab in np.where(l1h)]}')
