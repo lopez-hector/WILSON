@@ -505,6 +505,7 @@ class Trainer:
                         ground_truth_values = [self.id2class[lab] for lab in values if
                                                lab not in [0, 255]]
                         ax[2].set_title(f'Ground Truth {ground_truth_values}')
+                        patches = get_patches(im, values)
                         ax[2].legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
 
