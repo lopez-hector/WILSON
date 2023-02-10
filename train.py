@@ -481,7 +481,7 @@ class Trainer:
                                 if val in self.id2class:
                                     label_ = self.id2class[val]
                                 else:
-                                    label_ = 'unknown'
+                                    label_ = f'unknown_{val}'
                                 patches.append(mpatches.Patch(color=colors[i], label=label_))
                             return patches
 
