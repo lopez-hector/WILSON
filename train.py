@@ -405,48 +405,49 @@ class Trainer:
             fig, axs = plt.subplots(subplots_samples, 3, figsize=(20, subplots_samples*5))
             axs = axs.tolist()
             rand_gen = np.random.default_rng()
-            max_plot_img = 10
-            indices = rand_gen.choice(max_plot_img, 2, replace=False)
+            max_plot_img = 100
+            indices = rand_gen.choice(max_plot_img, subplots_samples, replace=False)
 
         # run predictions
         i = -1
         with torch.no_grad():
 
             for x in tqdm.tqdm(loader):
+
                 # x (image, mask, ImglvlLabel)
                 i = i+1
-                images = x[0].to(device, dtype=torch.float32)
-                labels = x[1].to(device, dtype=torch.long) # segmentation masks ground truths
-                l1h = x[2].to(device, dtype=torch.bool) # level image labels
+                if i in indices:
+                    images = x[0].to(device, dtype=torch.float32)
+                    labels = x[1].to(device, dtype=torch.long) # segmentation masks ground truths
+                    l1h = x[2].to(device, dtype=torch.bool) # level image labels
 
-                with amp.autocast():
-                    masks = classify(images) # get segmentation mask predictions
+                    with amp.autocast():
+                        masks = classify(images) # get segmentation mask predictions
 
-                _, prediction = masks.max(dim=1)
+                    _, prediction = masks.max(dim=1)
 
-                labels[labels < self.old_classes] = 0 # remove old classes from image
-                labels = labels.cpu().numpy()
-                prediction = prediction.cpu().numpy()
+                    labels[labels < self.old_classes] = 0 # remove old classes from image
+                    labels = labels.cpu().numpy()
+                    prediction = prediction.cpu().numpy()
 
-                metrics.update(labels, prediction) # segmentation mask prediction
+                    metrics.update(labels, prediction) # segmentation mask prediction
 
-                if plot and i in indices:
-                    val_data = val_set.no_transform(i)
-                    image = val_data
-                    
-                    ax = axs.pop()
-                    prediction = prediction[0]
-                    # prediction[prediction != 0] = 255
-                    prediction = np.repeat(np.array(prediction, np.float64)[:, :, np.newaxis], 3, axis=2)
-                    # blend = cv2.addWeighted(np.array(image), 0.4, prediction, 0.8, 0)
+                    if plot:
+                        val_data = val_set.no_transform(i)
+                        image = val_data
 
-                    ax[0].imshow(image)
-                    ax[0].set_title(f'Image Label {l1h}')
-                    ax[1].imshow(prediction)
-                    ax[1].set_title(f'Weakly Supervised Segmentation')
-                    ax[2].imshow(labels[0])
-                    ax[2].set_title(f'Ground Truth {np.unique(labels).tolist}')
+                        ax = axs.pop()
+                        prediction = prediction[0]
+                        # prediction[prediction != 0] = 255
+                        prediction = np.repeat(np.array(prediction, np.float64)[:, :, np.newaxis], 3, axis=2)
+                        # blend = cv2.addWeighted(np.array(image), 0.4, prediction, 0.8, 0)
 
+                        ax[0].imshow(image)
+                        ax[0].set_title(f'Image Label {np.where(l1h.cpu().numpy())}')
+                        ax[1].imshow(prediction)
+                        ax[1].set_title(f'Weakly Supervised Segmentation')
+                        ax[2].imshow(labels[0])
+                        ax[2].set_title(f'Ground Truth {np.unique(labels).tolist()}')
 
                 if i == max_plot_img:
                   break
