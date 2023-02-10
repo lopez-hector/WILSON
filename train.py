@@ -450,6 +450,7 @@ class Trainer:
                         ax[2].imshow(labels[0])
                         ax[2].set_title(f'Ground Truth {np.unique(unfiltered_labels).tolist()}')
 
+
                 if i == max_plot_img:
                   break
             # 
