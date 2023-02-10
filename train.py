@@ -467,7 +467,7 @@ class Trainer:
                         l1h = np.nonzero(l1h.cpu().numpy()[0])[0].tolist()
                         print(l1h, type(l1h))
                         ax[0].imshow(image)
-                        ax[0].set_title(f'Image Label {[self.id2class[lab+1] for lab in np.where(l1h)]}')
+                        ax[0].set_title(f'Image Label {[self.id2class[lab+1] for lab in l1h]}')
                         ax[1].imshow(prediction)
                         ax[1].set_title(f'Weakly Supervised Segmentation')
                         ax[2].imshow(labels[0])
