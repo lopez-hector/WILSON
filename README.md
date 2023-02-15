@@ -1,3 +1,6 @@
+# Lopez-Hector Fork
+Work in progress for the application of WILSON to the semantic segmentation of pathological images and radiology.
+
 # Incremental Learning in Semantic Segmentation from Image Labels
 ## Fabio Cermelli, Dario Fontanel, Antonio Tavera, Marco Ciccone, Barbara Caputo -- CVPR 22 [Paper](https://arxiv.org/abs/2112.01882) [Supp](https://github.com/fcdl94/WILSON/files/8424466/10756-supp.pdf)
 #### Official PyTorch Implementation
